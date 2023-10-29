@@ -1,13 +1,17 @@
 import { StatusBar } from "expo-status-bar";
-import { Button, FlatList, SafeAreaView, StyleSheet, Text, View } from "react-native";
-import { studentData } from "./studentData";
+import { ActivityIndicator, Button, FlatList, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import GradebookEntry from "./components/GradebookEntry";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useEffect, useState } from "react";
+import { fetchStudentDataFromFirestore } from "./firebaseConfig";
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  const [studentData, setStudentData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   function TitleScreen({ navigation }) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -27,10 +31,22 @@ export default function App() {
       </SafeAreaView>
     );
   };
+
+  const fetchData = async () => {
+    const data = await fetchStudentDataFromFirestore();
+    setStudentData(data);
+  };
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetchData();
+    setIsLoading(false);
+  }, []);
+
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={TitleScreen} />
+        <Stack.Screen name="Home" component={isLoading ? ActivityIndicator : TitleScreen} />
         <Stack.Screen name="Grades" component={GradesScreen} />
       </Stack.Navigator>
       <StatusBar style="auto" />
